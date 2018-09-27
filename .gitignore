@@ -12,7 +12,6 @@ tests/examples
 tests/pyroute2
 output.html
 MANIFEST
-setup.ini
 docs/changelog.rst
 docs/makefile.rst
 docs/general.rst
