@@ -536,6 +536,7 @@ class IPDB(object):
         # caches
         self.ipaddr = {}
         self.neighbours = {}
+        self.neighbour_states = {}
 
         try:
             self.nl.bind(async=self._nl_async)
@@ -695,6 +696,8 @@ class IPDB(object):
                 # -- neighbours
                 for key in tuple(self.neighbours.keys()):
                     del self.neighbours[key]
+                for key in tuple(self.neighbour_states.keys()):
+                    del self.neighbour_states[key]
 
     def create(self, kind, ifname, reuse=False, **kwarg):
         '''
@@ -951,6 +954,8 @@ class IPDB(object):
             if old_index in self.neighbours:
                 self.neighbours[index] = self.neighbours[old_index]
                 del self.neighbours[old_index]
+                self.neighbour_states[index] = self.neighbour_states[old_index]
+                del self.neighbour_states[old_index]
         else:
             # scenario #3, interface rename
             # scenario #4, assume rename
@@ -966,6 +971,7 @@ class IPDB(object):
 
         if index not in self.neighbours:
             self.neighbours[index] = LinkedSet()
+            self.neighbour_states[index] = {}
 
         device.load_netlink(msg)
 
@@ -993,6 +999,7 @@ class IPDB(object):
             self.interfaces.pop(idx, None)
             self.ipaddr.pop(idx, None)
             self.neighbours.pop(idx, None)
+            self.neighbour_states.pop(idx, None)
             target.set_item('ipdb_scope', 'detached')
 
     def watchdog(self, action='RTM_NEWLINK', **kwarg):
@@ -1109,6 +1116,13 @@ class IPDB(object):
                 try:
                     method = getattr(self.neighbours[neigh['ifindex']], action)
                     method(key=nla, raw=raw)
+                    if action == 'add':
+                        self.neighbour_states[neigh['ifindex']][nla] = \
+                            neigh['state']
+                    elif action == 'remove':
+                        self.neighbour_states[neigh['ifindex']].pop(nla, None)
+                    else:
+                        raise ValueError("Unknown action '%s'" % (action, ))
                 except:
                     pass
 
