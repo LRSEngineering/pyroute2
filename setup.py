@@ -17,11 +17,8 @@ except ImportError:
 config = configparser.ConfigParser()
 config.read('setup.ini')
 
-module = __import__(config.get('setup', 'setuplib'),
-                    globals(),
-                    locals(),
-                    ['setup'], 0)
-setup = getattr(module, 'setup')
+import setuptools
+from distutils.core import setup
 
 readme = open("README.md", "r")
 
